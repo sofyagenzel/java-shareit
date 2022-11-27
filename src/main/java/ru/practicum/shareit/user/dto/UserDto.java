@@ -10,8 +10,9 @@ import javax.validation.constraints.NotEmpty;
 @Builder
 public class UserDto {
     private int id;
+    @NotEmpty
     private String name;
-    @NotEmpty()
+    @NotEmpty
     @Email(message = "не корректный e-mail")
     private String email;
 }

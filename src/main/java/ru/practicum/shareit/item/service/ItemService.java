@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
@@ -63,7 +64,7 @@ public class ItemService {
         }
         return itemStorage.findAll()
                 .stream()
-                .filter(i -> i.getDescription().toLowerCase().contains(text.toLowerCase()) && i.getAvailable())
+                .filter(i -> StringUtils.containsIgnoreCase(i.getDescription().toLowerCase(), text.toLowerCase()) && i.getAvailable())
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }

@@ -20,12 +20,12 @@ public class ItemController {
         this.itemService = itemService;
     }
 
-    @GetMapping()
+    @GetMapping
     public List<ItemDto> findAll(@RequestHeader("X-Sharer-User-Id") int userId) {
         return itemService.getItemsByUserId(userId);
     }
 
-    @PostMapping()
+    @PostMapping
     public ItemDto createItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") int userId) {
         return itemService.createItem(itemDto, userId);
     }
