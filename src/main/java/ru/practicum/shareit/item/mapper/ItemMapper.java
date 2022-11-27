@@ -18,8 +18,8 @@ public class ItemMapper {
     }
 
     public static void toItem(Item item, ItemDto itemDto) {
-        Optional.ofNullable(itemDto.getName()).ifPresent(x -> item.setName(itemDto.getName()));
-        Optional.ofNullable(itemDto.getAvailable()).ifPresent(x -> item.setAvailable(itemDto.getAvailable()));
-        Optional.ofNullable(itemDto.getDescription()).ifPresent(x -> item.setDescription(itemDto.getDescription()));
+        Optional.ofNullable(itemDto.getName()).ifPresent(item::setName);
+        Optional.ofNullable(itemDto.getAvailable()).ifPresent(item::setAvailable);
+        Optional.ofNullable(itemDto.getDescription()).ifPresent(item::setDescription);
     }
 }

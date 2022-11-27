@@ -64,7 +64,7 @@ public class ItemService {
         }
         return itemStorage.findAll()
                 .stream()
-                .filter(i -> StringUtils.containsIgnoreCase(i.getDescription().toLowerCase(), text.toLowerCase()) && i.getAvailable())
+                .filter(i -> StringUtils.containsIgnoreCase(i.getDescription(), text) && i.getAvailable())
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
