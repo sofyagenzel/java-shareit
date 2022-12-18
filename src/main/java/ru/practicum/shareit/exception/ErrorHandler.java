@@ -10,8 +10,6 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse notCorrectState(final IllegalStateException e) {
-        return new ErrorResponse(
-                e.getMessage()
-        );
+        return new ErrorResponse(e.getMessage());
     }
 }

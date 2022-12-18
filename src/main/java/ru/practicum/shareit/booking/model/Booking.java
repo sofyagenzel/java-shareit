@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "bookings", schema = "public")
+@Table(name = "bookings")
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,12 +32,12 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private StatusBooking status;
 
-    public Booking(Booking newBooking) {
-        this.setId(newBooking.getId());
-        this.setBooker(newBooking.getBooker());
-        this.setStart(newBooking.getStart());
-        this.setEnd(newBooking.getEnd());
-        this.setStatus(newBooking.getStatus());
-        this.setItem(newBooking.getItem());
+    public Booking(Booking oldBooking) {
+        this.setId(oldBooking.getId());
+        this.setBooker(oldBooking.getBooker());
+        this.setStart(oldBooking.getStart());
+        this.setEnd(oldBooking.getEnd());
+        this.setStatus(oldBooking.getStatus());
+        this.setItem(oldBooking.getItem());
     }
 }

@@ -8,13 +8,14 @@ import java.time.LocalDate;
 
 @Data
 @Entity
-@Table(name = "requests", schema = "public")
+@Table(name = "requests")
 public class ItemRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "description", length = 2000)
     private String description;
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "requester_id", referencedColumnName = "id")
     private User requester;
     private LocalDate created;

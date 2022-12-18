@@ -17,6 +17,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
 
+    @Override
     public UserDto createUser(UserDto userDto) {
         User user = new User();
         UserMapper.toUser(user, userDto);
@@ -24,6 +25,7 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toUserDto(createdUser);
     }
 
+    @Override
     public UserDto updateUser(Long id, UserDto userDto) {
         var user = repository.findById(id);
         if (user.isPresent()) {
@@ -36,6 +38,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
     public List<UserDto> findAll() {
         return repository.findAll()
                 .stream()
@@ -43,6 +46,7 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
     }
 
+    @Override
     public UserDto getUserById(Long id) {
         var user = repository.findById(id);
         if (user.isEmpty()) {
@@ -51,6 +55,7 @@ public class UserServiceImpl implements UserService {
         return UserMapper.toUserDto(user.get());
     }
 
+    @Override
     public void removeUserById(Long id) {
         getUserById(id);
         repository.deleteById(id);

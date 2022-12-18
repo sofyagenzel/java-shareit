@@ -39,28 +39,26 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto createBooking(BookingDto bookingDto, Long userId) {
         Booking newBooking = new Booking();
         BookingMapper.toBooking(newBooking, bookingDto);
-        if (bookingDto.getEnd().isBefore(bookingDto.getStart())) {
+        if (bookingDto.getEnd() != null && bookingDto.getEnd().isBefore(bookingDto.getStart())) {
             throw new BadRequestException("Не корректная дата окончания бронирования");
         }
         var booker = userRepository.findById(userId);
         if (booker.isEmpty()) {
-            throw new ObjectNotFoundException("Пользователь не найден");
-        } else {
-            newBooking.setBooker(booker.get());
+            throw new ObjectNotFoundException("Пользователь не найден:" + userId);
         }
+        newBooking.setBooker(booker.get());
         var item = itemRepository.findById(bookingDto.getItemId());
         if (item.isEmpty()) {
-            throw new ObjectNotFoundException("Вещь не найдена");
-        } else {
-            if (item.get().getAvailable()) {
-                if (!booker.get().equals(item.get().getOwner())) {
-                    newBooking.setItem(item.get());
-                } else {
-                    throw new ObjectNotFoundException("Вещь другого собственника");
-                }
+            throw new ObjectNotFoundException("Вещь не найдена:" + bookingDto.getItemId());
+        }
+        if (item.get().getAvailable()) {
+            if (!booker.get().equals(item.get().getOwner())) {
+                newBooking.setItem(item.get());
             } else {
-                throw new BadRequestException("Вещь не доступна для бронирования");
+                throw new ObjectNotFoundException("Вещь другого собственника:" + item.get().getOwner().getId());
             }
+        } else {
+            throw new BadRequestException("Вещь не доступна для бронирования:" + item.get().getId());
         }
         newBooking.setStatus(StatusBooking.WAITING);
         Booking createdBooking = bookingRepository.save(newBooking);
@@ -73,7 +71,7 @@ public class BookingServiceImpl implements BookingService {
         if (booking.isPresent()) {
             if (!Objects.equals(booking.get().getBooker().getId(), userId) &&
                     !Objects.equals(booking.get().getItem().getOwner().getId(), userId)) {
-                throw new ObjectNotFoundException("У вещи другой собственник");
+                throw new ObjectNotFoundException("У вещи другой собственник:" + userId);
             }
             return BookingMapper.toBookingDto(booking.get());
         } else {
@@ -86,11 +84,11 @@ public class BookingServiceImpl implements BookingService {
         Booking updatedBooking;
         Booking booking = new Booking(bookingRepository.getReferenceById(bookingId));
         if (!Objects.equals(booking.getItem().getOwner().getId(), userId)) {
-            throw new ObjectNotFoundException("У вещи другой собственник");
+            throw new ObjectNotFoundException("У вещи другой собственник:" + userId);
         }
-        if ((booking.getStatus().equals(StatusBooking.APPROVED) && approved)
-                || (booking.getStatus().equals(StatusBooking.REJECTED) && !approved)) {
-            throw new IllegalStateException("Не корректный статус");
+        if ((booking.getStatus() == StatusBooking.APPROVED && approved)
+                || (booking.getStatus() == StatusBooking.REJECTED && !approved)) {
+            throw new IllegalStateException("Не корректный статус:" + booking.getStatus());
         }
         if (approved) {
             booking.setStatus(StatusBooking.APPROVED);
@@ -105,7 +103,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingDto> getAllBookingsByState(Long userId, String stringState) {
         var booker = userRepository.findById(userId);
         if (booker.isEmpty()) {
-            throw new ObjectNotFoundException("Пользователь не найден");
+            throw new ObjectNotFoundException("Пользователь не найден: " + userId);
         }
         State state = checkState(stringState).orElseThrow(() -> new IllegalStateException("Unknown state: " + stringState));
         return stateToRepository(booker.get(), state)
@@ -118,7 +116,7 @@ public class BookingServiceImpl implements BookingService {
     public List<BookingDto> getAllBookingsByStateAndOwner(Long userId, String stringState) {
         var booker = userRepository.findById(userId);
         if (booker.isEmpty()) {
-            throw new ObjectNotFoundException("Пользователь не найден");
+            throw new ObjectNotFoundException("Пользователь не найден: " + userId);
         }
         State state = checkState(stringState).orElseThrow(() -> new IllegalStateException("Unknown state: " + stringState));
         return stateToRepositoryAndOwner(booker.get(), state)
@@ -133,22 +131,22 @@ public class BookingServiceImpl implements BookingService {
         List<Booking> result = new ArrayList<>();
         switch (state) {
             case ALL:
-                result = bookingRepository.findAllByOwnerOfItem(owner.getId());
+                result = bookingRepository.findAllByItemOwnerId(owner.getId());
                 break;
             case CURRENT:
-                result = bookingRepository.findAllByOwnerOfItemAndStartIsBeforeAndEndIsAfter(owner, now);
+                result = bookingRepository.findAllByItemOwnerAndStartIsBeforeAndEndIsAfter(owner, now, now);
                 break;
             case PAST:
-                result = bookingRepository.findAllByOwnerOfItemAndEndIsBeforeAndStatusIs(owner.getId(), now, StatusBooking.APPROVED);
+                result = bookingRepository.findAllByItemOwnerIdAndEndIsBeforeAndStatusIs(owner.getId(), now, StatusBooking.APPROVED);
                 break;
             case FUTURE:
-                result = bookingRepository.findAllByOwnerOfItemAndStartIsAfter(owner.getId(), now);
+                result = bookingRepository.findAllByItemOwnerIdAndStartIsAfter(owner.getId(), now);
                 break;
             case WAITING:
-                result = bookingRepository.findAllByOwnerOfItemAndStatusIs(owner.getId(), StatusBooking.WAITING);
+                result = bookingRepository.findAllByItemOwnerIdAndStatusIs(owner.getId(), StatusBooking.WAITING);
                 break;
             case REJECTED:
-                result = bookingRepository.findAllByOwnerOfItemAndStatusIs(owner.getId(), StatusBooking.REJECTED);
+                result = bookingRepository.findAllByItemOwnerIdAndStatusIs(owner.getId(), StatusBooking.REJECTED);
                 break;
         }
         return result.stream()
@@ -184,4 +182,3 @@ public class BookingServiceImpl implements BookingService {
                 .collect(Collectors.toList());
     }
 }
-

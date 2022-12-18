@@ -10,19 +10,18 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "items", schema = "public")
+@Table(name = "items")
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotNull
     @NotBlank
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, length = 200)
     private String name;
     @NotNull
     @NotBlank

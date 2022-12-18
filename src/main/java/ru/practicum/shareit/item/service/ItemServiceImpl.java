@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -39,9 +40,8 @@ public class ItemServiceImpl implements ItemService {
         var owner = userRepository.findById(userId);
         if (owner.isEmpty()) {
             throw new ObjectNotFoundException("Собственник не найден");
-        } else {
-            newItem.setOwner(owner.get());
         }
+        newItem.setOwner(owner.get());
         Item createdItem = itemRepository.save(newItem);
         return ItemMapper.toItemDto(createdItem);
     }
@@ -69,7 +69,7 @@ public class ItemServiceImpl implements ItemService {
             addCommentsItem(itemDto);
             return itemDto;
         } else {
-            throw new ObjectNotFoundException("Вещь не найдена");
+            throw new ObjectNotFoundException("Вещь не найдена:" + id);
         }
     }
 
@@ -118,7 +118,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     public List<ItemDto> searchItems(String text) {
-        if (text.isBlank()) {
+        if (StringUtils.isBlank(text)) {
             return new ArrayList<>();
         }
         return itemRepository.search(text)
@@ -134,13 +134,13 @@ public class ItemServiceImpl implements ItemService {
         newComment.setCreated(LocalDateTime.now());
         var owner = userRepository.findById(userId);
         if (owner.isEmpty()) {
-            throw new ObjectNotFoundException("Пользователь не найден");
+            throw new ObjectNotFoundException("Пользователь не найден:" + userId);
         } else {
             newComment.setAuthor(owner.get());
         }
         var item = itemRepository.findById(itemId);
         if (item.isEmpty()) {
-            throw new ObjectNotFoundException("Вещь не найдена");
+            throw new ObjectNotFoundException("Вещь не найдена:" + itemId);
         } else {
             newComment.setItem(item.get());
         }

@@ -11,12 +11,12 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 public class BookingDto {
-    Long id;
-    LocalDateTime start;
-    LocalDateTime end;
-    StatusBooking status;
-    Long itemId;
-    Long bookerId;
-    User booker;
-    Item item;
+    private Long id;
+    private LocalDateTime start;
+    private LocalDateTime end;
+    private StatusBooking status;
+    private Long itemId;
+    private Long bookerId;
+    private User booker;
+    private Item item;
 }

@@ -8,21 +8,20 @@ import ru.practicum.shareit.user.model.User;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "comments", schema = "public")
+@Table(name = "comments")
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "text")
+    @Column(name = "text", length = 2000)
     private String text;
-    @OneToOne()
+    @OneToOne
     private Item item;
-    @OneToOne()
+    @OneToOne
     private User author;
     @Column(name = "created_date")
     private LocalDateTime created;

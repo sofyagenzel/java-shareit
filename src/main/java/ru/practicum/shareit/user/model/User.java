@@ -12,18 +12,18 @@ import javax.validation.constraints.NotEmpty;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "users", schema = "public")
+@Table(name = "users")
 
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(name = "username", nullable = false)
+    @Column(name = "username", nullable = false, length = 200)
     @NotEmpty
     private String name;
     @NotEmpty
     @Email(message = "не корректный e-mail")
-    @Column(name = "email", nullable = false, unique = true)
+    @Column(name = "email", nullable = false, unique = true, length = 30)
     private String email;
 
     public User(User newUser) {
