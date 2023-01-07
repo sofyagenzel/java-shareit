@@ -8,6 +8,8 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Validated
@@ -22,8 +24,10 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> findAll(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        return itemService.getItemsByUserId(userId);
+    public List<ItemDto> findAll(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                 @PositiveOrZero @RequestParam(name = "from", required = false) Integer from,
+                                 @Positive @RequestParam(name = "size", required = false) Integer size) {
+        return itemService.getItemsByUserId(userId, from, size);
     }
 
     @PostMapping
@@ -42,8 +46,10 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam(name = "text") String text) {
-        return itemService.searchItems(text);
+    public List<ItemDto> searchItems(@RequestParam(name = "text") String text,
+                                     @PositiveOrZero @RequestParam(name = "from", required = false) Integer from,
+                                     @Positive @RequestParam(name = "size", required = false) Integer size) {
+        return itemService.searchItems(text, from, size);
     }
 
     @DeleteMapping("/{itemId}")
