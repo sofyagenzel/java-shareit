@@ -31,13 +31,4 @@ public class Booking {
     private User booker;
     @Enumerated(EnumType.STRING)
     private StatusBooking status;
-
-    public Booking(Booking oldBooking) {
-        this.setId(oldBooking.getId());
-        this.setBooker(oldBooking.getBooker());
-        this.setStart(oldBooking.getStart());
-        this.setEnd(oldBooking.getEnd());
-        this.setStatus(oldBooking.getStatus());
-        this.setItem(oldBooking.getItem());
-    }
 }
