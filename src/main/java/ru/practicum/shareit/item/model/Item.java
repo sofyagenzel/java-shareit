@@ -32,7 +32,7 @@ public class Item {
     private Boolean available;
     @OneToOne
     private User owner;
-    @OneToOne
+    @ManyToOne
     private ItemRequest request;
 
     public Item(Item newItem) {
