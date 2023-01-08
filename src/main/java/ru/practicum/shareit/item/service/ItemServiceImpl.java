@@ -2,6 +2,8 @@ package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
@@ -16,6 +18,7 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -32,6 +35,7 @@ public class ItemServiceImpl implements ItemService {
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
+    private final RequestRepository requestRepository;
 
     @Override
     public ItemDto createItem(ItemDto itemDto, Long userId) {
@@ -40,6 +44,10 @@ public class ItemServiceImpl implements ItemService {
         var owner = userRepository.findById(userId);
         if (owner.isEmpty()) {
             throw new ObjectNotFoundException("Собственник не найден");
+        }
+        if (itemDto.getRequestId() != null) {
+            var itemRequest = requestRepository.findById(itemDto.getRequestId());
+            itemRequest.ifPresent(newItem::setRequest);
         }
         newItem.setOwner(owner.get());
         Item createdItem = itemRepository.save(newItem);
@@ -54,8 +62,8 @@ public class ItemServiceImpl implements ItemService {
         }
         ItemMapper.toItem(item.get(), itemDto);
         item.get().setId(itemId);
-        Item updatedItem = itemRepository.save(item.get());
-        return ItemMapper.toItemDto(updatedItem);
+        itemRepository.save(item.get());
+        return ItemMapper.toItemDto(item.get());
     }
 
     @Override
@@ -88,8 +96,18 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> getItemsByUserId(Long userId) {
-        return itemRepository.findAllByOwnerId(userId)
+    public List<ItemDto> getItemsByUserId(Long userId, Integer from, Integer size) {
+        Pageable pageable;
+        if (from == null || size == null) {
+            pageable = Pageable.unpaged();
+        } else {
+            pageable = PageRequest.of(from, size);
+        }
+        var owner = userRepository.findById(userId);
+        if (owner.isEmpty()) {
+            throw new ObjectNotFoundException("Пользователь не найден:" + userId);
+        }
+        return itemRepository.findAllByOwnerId(userId, pageable)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .map(this::addBookingsItem)
@@ -114,14 +132,24 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public void removeItemById(Long id) {
+        var item = itemRepository.findById(id);
+        if (item.isEmpty()) {
+            throw new ObjectNotFoundException("Вещь не найдена:" + id);
+        }
         itemRepository.deleteById(id);
     }
 
-    public List<ItemDto> searchItems(String text) {
+    public List<ItemDto> searchItems(String text, Integer from, Integer size) {
+        Pageable pageable;
+        if (from == null || size == null) {
+            pageable = Pageable.unpaged();
+        } else {
+            pageable = PageRequest.of(from / size, size);
+        }
         if (StringUtils.isBlank(text)) {
             return new ArrayList<>();
         }
-        return itemRepository.search(text)
+        return itemRepository.search(text, pageable)
                 .stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
