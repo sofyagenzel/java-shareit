@@ -13,7 +13,6 @@ import javax.validation.constraints.NotEmpty;
 @AllArgsConstructor
 @Entity
 @Table(name = "users")
-
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,10 +24,4 @@ public class User {
     @Email(message = "не корректный e-mail")
     @Column(name = "email", nullable = false, unique = true, length = 30)
     private String email;
-
-    public User(User newUser) {
-        this.setId(newUser.getId());
-        this.setName(newUser.getName());
-        this.setEmail(newUser.getEmail());
-    }
 }
