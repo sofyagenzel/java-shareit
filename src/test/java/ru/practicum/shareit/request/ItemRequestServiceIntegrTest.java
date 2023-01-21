@@ -39,13 +39,12 @@ public class ItemRequestServiceIntegrTest {
         User user = new User(1L, "user", "user@email.ru");
         UserDto userDto = new UserDto(1L, "user", "user@email.ru");
         userService.createUser(userDto);
-        ItemRequestDto itemRequestDto = new ItemRequestDto(1L, "description", user, LocalDateTime.now(), null);
+        ItemRequestDto itemRequestDto = new ItemRequestDto(1L, "description", LocalDateTime.now());
         itemRequestService.createRequest(itemRequestDto, userDto.getId());
-        ItemDto itemDto = new ItemDto(null, null, null, 1L, "item", "item test", true, 1L);
+        ItemDto itemDto = new ItemDto(1L, "item", "item test", true, 1L);
         itemService.createItem(itemDto, 1L);
         TypedQuery<ItemRequest> query = em.createQuery("Select i from ItemRequest i where i.id = : id", ItemRequest.class);
         ItemRequest itemRequest = query.setParameter("id", itemRequestDto.getId()).getSingleResult();
         assertThat(itemRequest.getDescription(), equalTo(itemRequestDto.getDescription()));
-        assertThat(itemRequest.getRequester().getId(), equalTo(itemRequestDto.getRequester().getId()));
     }
 }

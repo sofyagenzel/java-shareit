@@ -34,7 +34,7 @@ class ItemRepositoryTest {
     @Test
     void searchTest() {
         user = userRepository.save(new User(1L, "User", "user@email.ru"));
-        itemRequest = requestRepository.save(new ItemRequest(1L, "description", user, LocalDateTime.now(), null));
+        itemRequest = requestRepository.save(new ItemRequest(1L, "description", user, LocalDateTime.now()));
         item = itemRepository.save(new Item(1L, "item", "item test", true, user, itemRequest));
         Pageable pageable = PageRequest.of(0, 1);
         Page<Item> itemList = itemRepository.search("test", pageable);

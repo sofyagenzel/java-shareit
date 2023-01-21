@@ -12,6 +12,7 @@ import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
+import ru.practicum.shareit.request.dto.ItemRequestResponseDto;
 import ru.practicum.shareit.request.model.ItemRequest;
 import ru.practicum.shareit.request.repository.RequestRepository;
 import ru.practicum.shareit.request.service.ItemRequestServiceImpl;
@@ -54,8 +55,8 @@ class ItemRequestServiceTest {
         userDto = new UserDto(1L, "User1", "user@email.ru");
         user = new User(1L, "User1", "user@email.ru");
         user1 = new User(2L, "User2", "user2@email.ru");
-        itemRequest = new ItemRequest(1L, "Request", user, LocalDateTime.now(), null);
-        itemRequestDto = new ItemRequestDto(1L, "Request", user, LocalDateTime.now(), null);
+        itemRequest = new ItemRequest(1L, "Request", user, LocalDateTime.now());
+        itemRequestDto = new ItemRequestDto(1L, "Request", LocalDateTime.now());
         item = new Item(1L, "item", "item test", true, user1, itemRequest);
     }
 
@@ -63,7 +64,7 @@ class ItemRequestServiceTest {
     void createRequestTest() {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(itemRequestRepository.save(any())).thenReturn(itemRequest);
-        ItemRequestDto itemRequestDb = itemRequestService.createRequest(itemRequestDto, 1L);
+        ItemRequestResponseDto itemRequestDb = itemRequestService.createRequest(itemRequestDto, 1L);
         assertEquals(itemRequestDto.getId(), itemRequestDb.getId());
         assertEquals(itemRequestDto.getDescription(), itemRequestDb.getDescription());
         assertEquals(LocalDateTime.now().format((DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss"))),
@@ -74,7 +75,7 @@ class ItemRequestServiceTest {
     void getRequestTest() {
         when(itemRequestRepository.findById(itemRequest.getId())).thenReturn(Optional.of(itemRequest));
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
-        ItemRequestDto itemRequestDb = itemRequestService.getRequest(itemRequest.getId(), userDto.getId());
+        ItemRequestResponseDto itemRequestDb = itemRequestService.getRequest(itemRequest.getId(), userDto.getId());
         assertEquals(itemRequest.getId(), itemRequestDb.getId());
         assertEquals(itemRequest.getDescription(), itemRequestDb.getDescription());
         assertEquals(itemRequest.getCreated().format(DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")),
@@ -87,10 +88,10 @@ class ItemRequestServiceTest {
         List<ItemRequest> itemRequests = new ArrayList<>(Collections.singletonList(itemRequest));
         Page<ItemRequest> pagedResponse = new PageImpl(itemRequests);
         when(itemRequestRepository.findAllByRequesterId(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
-        List<ItemRequestDto> itemRequestList = itemRequestService.getUserRequests(userDto.getId(), 1, 1);
+        List<ItemRequestResponseDto> itemRequestList = itemRequestService.getUserRequests(userDto.getId(), 1, 1);
         assertNotNull(itemRequestList);
         assertEquals(1, itemRequestList.size());
-        ItemRequestDto itemRequestDb = itemRequestList.get(0);
+        ItemRequestResponseDto itemRequestDb = itemRequestList.get(0);
         assertEquals(itemRequest.getId(), itemRequestDb.getId());
         assertEquals(itemRequest.getDescription(), itemRequestDb.getDescription());
         assertEquals(itemRequest.getCreated().format(DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")),
@@ -100,14 +101,14 @@ class ItemRequestServiceTest {
 
     @Test
     void getAllRequestTest() {
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.findById(user1.getId())).thenReturn(Optional.of(user1));
         List<ItemRequest> itemRequests = new ArrayList<>(Collections.singletonList(itemRequest));
         Page<ItemRequest> pagedResponse = new PageImpl(itemRequests);
         when(itemRequestRepository.findAllByRequesterIdIsNot(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
-        List<ItemRequestDto> itemRequestList = itemRequestService.getAllRequests(1L, 1, 1);
-        assertNotNull(itemRequestList);
+        when(itemRepository.findAll()).thenReturn(Collections.singletonList(item));
+        List<ItemRequestResponseDto> itemRequestList = itemRequestService.getAllRequests(2L, 1, 1);
         assertEquals(1, itemRequestList.size());
-        ItemRequestDto itemRequestDb = itemRequestList.get(0);
+        ItemRequestResponseDto itemRequestDb = itemRequestList.get(0);
         assertEquals(itemRequest.getId(), itemRequestDb.getId());
         assertEquals(itemRequest.getDescription(), itemRequestDb.getDescription());
         assertEquals(itemRequest.getCreated().format(DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")),

@@ -11,8 +11,10 @@ import javax.validation.constraints.NotBlank;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CommentDto {
+public class CommentResponseDto {
     private Long id;
     @NotBlank
     private String text;
+    @NotBlank
+    private String authorName;
 }

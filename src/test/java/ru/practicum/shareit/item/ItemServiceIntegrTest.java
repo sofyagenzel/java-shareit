@@ -39,9 +39,9 @@ public class ItemServiceIntegrTest {
         User user = new User(1L, "user", "user@email.ru");
         UserDto userDto = new UserDto(1L, "user", "user@email.ru");
         userService.createUser(userDto);
-        ItemRequestDto itemRequestDto = new ItemRequestDto(1L, "description", user, LocalDateTime.now(), null);
+        ItemRequestDto itemRequestDto = new ItemRequestDto(1L, "description", LocalDateTime.now());
         itemRequestService.createRequest(itemRequestDto, userDto.getId());
-        ItemDto itemDto = new ItemDto(null, null, null, 1L, "item", "item test", true, 1L);
+        ItemDto itemDto = new ItemDto(1L, "item", "item test", true, 1L);
         itemService.createItem(itemDto, 1L);
         TypedQuery<Item> query = em.createQuery("Select i from Item i where i.id = : id", Item.class);
         Item item = query.setParameter("id", itemDto.getId()).getSingleResult();

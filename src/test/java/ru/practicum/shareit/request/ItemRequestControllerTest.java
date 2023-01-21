@@ -35,7 +35,7 @@ class ItemRequestControllerTest {
     @Test
     void createRequestTest() throws Exception {
         User user = new User(1L, "User1", "user@email.ru");
-        String body = mapper.writeValueAsString(new ItemRequestDto(1L, "item", user, LocalDateTime.now(), null));
+        String body = mapper.writeValueAsString(new ItemRequestDto(1L, "item", LocalDateTime.now()));
         mockMvc.perform(post("/requests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("X-Sharer-User-Id", "1")

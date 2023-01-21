@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingResponseDto;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.State;
@@ -57,6 +58,7 @@ public class BookingServiceTest {
     Booking booking1;
     Booking booking2;
     BookingDto bookingDto;
+    BookingResponseDto bookingResponseDto;
 
     @BeforeEach
     void beforeEach() {
@@ -67,11 +69,10 @@ public class BookingServiceTest {
         user = new User(1L, "User1", "iuser1@mail.ru");
         user1 = new User(2L, "User1", "iuser1@mail.ru");
         item = new Item(1L, "Item", "Item description", true, user1, new ItemRequest());
-        itemDto = new ItemDto(null, null, null, 1L, "Item",
-                "Item description", true, 1L);
+        itemDto = new ItemDto(1L, "Item", "Item description", true, 1L);
         LocalDateTime start = LocalDateTime.now().plusDays(1);
         LocalDateTime end = LocalDateTime.now().plusDays(2);
-        bookingDto = new BookingDto(1L, start, end, StatusBooking.APPROVED, 1L, 2L, user, item);
+        bookingDto = new BookingDto(1L, start, end, 1L);
         booking = new Booking(1L, start, end, item, user, StatusBooking.APPROVED);
         booking1 = new Booking(2L, start, end, item, user, StatusBooking.WAITING);
         booking2 = new Booking(1L, start, null, item, user, StatusBooking.APPROVED);
@@ -82,7 +83,7 @@ public class BookingServiceTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(itemRepository.findById(anyLong())).thenReturn(Optional.of(item));
         when(bookingRepository.save(any())).thenReturn(booking);
-        BookingDto bookingDb = bookingService.createBooking(bookingDto, 1L);
+        BookingResponseDto bookingDb = bookingService.createBooking(bookingDto, 1L);
         assertEquals(bookingDb.getId(), bookingDto.getId());
         assertEquals(bookingDb.getStart(), bookingDto.getStart());
         assertEquals(bookingDb.getEnd(), bookingDto.getEnd());
@@ -96,8 +97,7 @@ public class BookingServiceTest {
         when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
         assertThrows(IllegalStateException.class, () -> bookingService.updateBooking(1L, 2L, true));
         assertThrows(ObjectNotFoundException.class, () -> bookingService.updateBooking(1L, 5L, true));
-        when(bookingRepository.save(any(Booking.class))).thenReturn(booking);
-        BookingDto bookingDb = bookingService.updateBooking(bookingDto.getId(), 2L, false);
+        BookingResponseDto bookingDb = bookingService.updateBooking(bookingDto.getId(), 2L, false);
         assertEquals(bookingDb.getId(), bookingDto.getId());
         assertEquals(bookingDb.getStart(), bookingDto.getStart());
     }
@@ -105,10 +105,10 @@ public class BookingServiceTest {
     @Test
     public void getBookingTest() {
         when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
-        bookingDto = bookingService.getBooking(1L, 1L);
-        assertEquals(booking.getId(), bookingDto.getId());
-        assertEquals(booking.getItem(), bookingDto.getItem());
-        assertEquals(booking.getStart(), bookingDto.getStart());
+        bookingResponseDto = bookingService.getBooking(1L, 1L);
+        assertEquals(booking.getId(), bookingResponseDto.getId());
+        assertEquals(booking.getItem(), bookingResponseDto.getItem());
+        assertEquals(booking.getStart(), bookingResponseDto.getStart());
         assertThrows(ObjectNotFoundException.class, () -> bookingService.getBooking(2L, 7L));
     }
 
@@ -117,8 +117,8 @@ public class BookingServiceTest {
         when(userRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(user));
         List<Booking> bookings = new ArrayList<>(Collections.singletonList(booking));
         Page<Booking> pagedResponse = new PageImpl(bookings);
-        when(bookingRepository.findBookingsByBooker(any(User.class), any(Pageable.class))).thenReturn(pagedResponse);
-        List<BookingDto> bookingDb = bookingService.getAllBookingsByState(1L, "ALL", 1, 1);
+        when(bookingRepository.findBookingsByBookerOrderByStartDesc(any(User.class), any(Pageable.class))).thenReturn(pagedResponse);
+        List<BookingResponseDto> bookingDb = bookingService.getAllBookingsByState(1L, "ALL", 1, 1);
         assertEquals(1, bookingDb.size());
         assertThrows(IllegalStateException.class, () -> bookingService.getAllBookingsByState(1L, "FAIL", 1, 1));
         final IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class,
@@ -131,8 +131,8 @@ public class BookingServiceTest {
         when(userRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(user));
         List<Booking> bookings = new ArrayList<>(Collections.singletonList(booking));
         Page<Booking> pagedResponse = new PageImpl(bookings);
-        when(bookingRepository.findAllByItemOwnerId(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
-        List<BookingDto> bookingDb = bookingService.getAllBookingsByStateAndOwner(2L, "ALL", 1, 1);
+        when(bookingRepository.findAllByItemOwnerIdOrderByStartDesc(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
+        List<BookingResponseDto> bookingDb = bookingService.getAllBookingsByStateAndOwner(2L, "ALL", 1, 1);
         System.out.println(bookings);
         assertEquals(1, bookingDb.size());
         assertThrows(IllegalStateException.class, () -> bookingService.getAllBookingsByStateAndOwner(1L, "FAIL", 1, 1));
@@ -146,26 +146,26 @@ public class BookingServiceTest {
         Pageable pageable = PageRequest.of(1, 1);
         List<Booking> bookings = new ArrayList<>(Collections.singletonList(booking));
         Page<Booking> pagedResponse = new PageImpl(bookings);
-        when(bookingRepository.findAllByItemOwnerId(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
-        when(bookingRepository.findAllByItemOwnerIdAndStatusIs(anyLong(), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
-        BookingDto bookingDb = bookingService.stateToRepositoryAndOwner(user, State.ALL, pageable).get(0);
-        BookingDto bookingDb1 = bookingService.stateToRepositoryAndOwner(user, State.REJECTED, pageable).get(0);
+        when(bookingRepository.findAllByItemOwnerIdOrderByStartDesc(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
+        when(bookingRepository.findAllByItemOwnerIdAndStatusIsOrderByStartDesc(anyLong(), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
+        BookingResponseDto bookingDb = bookingService.stateToRepositoryAndOwner(user, State.ALL, pageable).get(0);
+        BookingResponseDto bookingDb1 = bookingService.stateToRepositoryAndOwner(user, State.REJECTED, pageable).get(0);
         assertEquals(booking.getId(), bookingDb.getId());
         assertEquals(booking.getItem(), bookingDb.getItem());
         assertNotNull(bookingDb1);
-        when(bookingRepository.findAllByItemOwnerIdAndEndIsBeforeAndStatusIs(anyLong(), any(LocalDateTime.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
-        BookingDto bookingDb2 = bookingService.stateToRepositoryAndOwner(user, State.PAST, pageable).get(0);
+        when(bookingRepository.findAllByItemOwnerIdAndEndIsBeforeAndStatusIsOrderByStartDesc(anyLong(), any(LocalDateTime.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
+        BookingResponseDto bookingDb2 = bookingService.stateToRepositoryAndOwner(user, State.PAST, pageable).get(0);
         assertNotNull(bookingDb2);
         List<Booking> bookings1 = new ArrayList<>(Collections.singletonList(booking1));
         Page<Booking> pagedResponse1 = new PageImpl(bookings);
-        when(bookingRepository.findAllByItemOwnerIdAndStatusIs(anyLong(), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse1);
-        BookingDto bookingDb3 = bookingService.stateToRepositoryAndOwner(user, State.WAITING, pageable).get(0);
+        when(bookingRepository.findAllByItemOwnerIdAndStatusIsOrderByStartDesc(anyLong(), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse1);
+        BookingResponseDto bookingDb3 = bookingService.stateToRepositoryAndOwner(user, State.WAITING, pageable).get(0);
         assertNotNull(bookingDb3);
-        when(bookingRepository.findAllByItemOwnerAndStartIsBeforeAndEndIsAfter(any(User.class), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
-        BookingDto bookingDb4 = bookingService.stateToRepositoryAndOwner(user, State.CURRENT, pageable).get(0);
+        when(bookingRepository.findAllByItemOwnerAndStartIsBeforeAndEndIsAfterOrderByStartDesc(any(User.class), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
+        BookingResponseDto bookingDb4 = bookingService.stateToRepositoryAndOwner(user, State.CURRENT, pageable).get(0);
         assertNotNull(bookingDb4);
-        when(bookingRepository.findAllByItemOwnerIdAndStartIsAfter(anyLong(), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
-        BookingDto bookingDb5 = bookingService.stateToRepositoryAndOwner(user, State.FUTURE, pageable).get(0);
+        when(bookingRepository.findAllByItemOwnerIdAndStartIsAfterOrderByStartDesc(anyLong(), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
+        BookingResponseDto bookingDb5 = bookingService.stateToRepositoryAndOwner(user, State.FUTURE, pageable).get(0);
         assertNotNull(bookingDb5);
     }
 
@@ -174,26 +174,26 @@ public class BookingServiceTest {
         Pageable pageable = PageRequest.of(1, 1);
         List<Booking> bookings = new ArrayList<>(Collections.singletonList(booking));
         Page<Booking> pagedResponse = new PageImpl(bookings);
-        when(bookingRepository.findBookingsByBooker(any(User.class), any(Pageable.class))).thenReturn(pagedResponse);
-        when(bookingRepository.findAllByBookerAndStatusIs(any(User.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
-        BookingDto bookingDb = bookingService.stateToRepository(user, State.ALL, pageable).get(0);
-        BookingDto bookingDb1 = bookingService.stateToRepository(user, State.REJECTED, pageable).get(0);
+        when(bookingRepository.findBookingsByBookerOrderByStartDesc(any(User.class), any(Pageable.class))).thenReturn(pagedResponse);
+        when(bookingRepository.findAllByBookerAndStatusIsOrderByStartDesc(any(User.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
+        BookingResponseDto bookingDb = bookingService.stateToRepository(user, State.ALL, pageable).get(0);
+        BookingResponseDto bookingDb1 = bookingService.stateToRepository(user, State.REJECTED, pageable).get(0);
         assertEquals(booking.getId(), bookingDb.getId());
         assertEquals(booking.getItem(), bookingDb.getItem());
         assertNotNull(bookingDb1);
-        when(bookingRepository.findAllByBookerAndEndIsBeforeAndStatusIs(any(User.class), any(LocalDateTime.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
-        BookingDto bookingDb2 = bookingService.stateToRepository(user, State.PAST, pageable).get(0);
+        when(bookingRepository.findAllByBookerAndEndIsBeforeAndStatusIsOrderByStartDesc(any(User.class), any(LocalDateTime.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
+        BookingResponseDto bookingDb2 = bookingService.stateToRepository(user, State.PAST, pageable).get(0);
         assertNotNull(bookingDb2);
         List<Booking> bookings1 = new ArrayList<>(Collections.singletonList(booking1));
         Page<Booking> pagedResponse1 = new PageImpl(bookings);
-        when(bookingRepository.findAllByBookerAndStatusIs(any(User.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse1);
-        BookingDto bookingDb3 = bookingService.stateToRepository(user, State.WAITING, pageable).get(0);
+        when(bookingRepository.findAllByBookerAndStatusIsOrderByStartDesc(any(User.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse1);
+        BookingResponseDto bookingDb3 = bookingService.stateToRepository(user, State.WAITING, pageable).get(0);
         assertNotNull(bookingDb3);
-        when(bookingRepository.findAllByBookerAndStartIsBeforeAndEndIsAfter(any(User.class), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
-        BookingDto bookingDb4 = bookingService.stateToRepository(user, State.CURRENT, pageable).get(0);
+        when(bookingRepository.findAllByBookerAndStartIsBeforeAndEndIsAfterOrderByStartDesc(any(User.class), any(LocalDateTime.class), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
+        BookingResponseDto bookingDb4 = bookingService.stateToRepository(user, State.CURRENT, pageable).get(0);
         assertNotNull(bookingDb4);
-        when(bookingRepository.findAllByBookerAndStartIsAfter(any(User.class), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
-        BookingDto bookingDb5 = bookingService.stateToRepository(user, State.FUTURE, pageable).get(0);
+        when(bookingRepository.findAllByBookerAndStartIsAfterOrderByStartDesc(any(User.class), any(LocalDateTime.class), any(Pageable.class))).thenReturn(pagedResponse1);
+        BookingResponseDto bookingDb5 = bookingService.stateToRepository(user, State.FUTURE, pageable).get(0);
         assertNotNull(bookingDb5);
     }
 }

@@ -1,10 +1,12 @@
 package ru.practicum.shareit.item.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.CommentResponseDto;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemResponseDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
@@ -13,42 +15,38 @@ import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @Validated
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
 
-    @Autowired
-    public ItemController(ItemService itemService) {
-        this.itemService = itemService;
-    }
-
     @GetMapping
-    public List<ItemDto> findAll(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                 @PositiveOrZero @RequestParam(name = "from", required = false) Integer from,
-                                 @Positive @RequestParam(name = "size", required = false) Integer size) {
+    public List<ItemResponseDto> findAll(@RequestHeader("X-Sharer-User-Id") Long userId,
+                                         @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                         @Positive @RequestParam(name = "size", defaultValue = "100") Integer size) {
         return itemService.getItemsByUserId(userId, from, size);
     }
 
     @PostMapping
-    public ItemDto createItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemResponseDto createItem(@Valid @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long userId) {
         return itemService.createItem(itemDto, userId);
     }
 
     @PatchMapping("/{itemId}")
-    public ItemDto updateItem(@RequestBody ItemDto itemDto, @PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemResponseDto updateItem(@RequestBody ItemDto itemDto, @PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
         return itemService.updateItem(itemDto, itemId, userId);
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getItem(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemResponseDto getItem(@PathVariable Long itemId, @RequestHeader("X-Sharer-User-Id") Long userId) {
         return itemService.getItemById(itemId, userId);
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItems(@RequestParam(name = "text") String text,
-                                     @PositiveOrZero @RequestParam(name = "from", required = false) Integer from,
-                                     @Positive @RequestParam(name = "size", required = false) Integer size) {
+    public List<ItemResponseDto> searchItems(@RequestParam(name = "text") String text,
+                                             @PositiveOrZero @RequestParam(name = "from", defaultValue = "0") Integer from,
+                                             @Positive @RequestParam(name = "size", defaultValue = "100") Integer size) {
         return itemService.searchItems(text, from, size);
     }
 
@@ -58,9 +56,9 @@ public class ItemController {
     }
 
     @PostMapping("{itemId}/comment")
-    public CommentDto createComment(@Valid @RequestBody CommentDto commentDto,
-                                    @RequestHeader("X-Sharer-User-Id") Long userId,
-                                    @PathVariable Long itemId) {
+    public CommentResponseDto createComment(@Valid @RequestBody CommentDto commentDto,
+                                            @RequestHeader("X-Sharer-User-Id") Long userId,
+                                            @PathVariable Long itemId) {
         return itemService.createComment(commentDto, userId, itemId);
     }
 }

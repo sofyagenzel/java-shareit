@@ -16,7 +16,7 @@ public class ItemDtoTest {
 
     @Test
     void testItemDto() throws Exception {
-        ItemDto itemDto = new ItemDto(null, null, null, 1L, "item_dto", "item dto test", true, 1L);
+        ItemDto itemDto = new ItemDto(1L, "item_dto", "item dto test", true, 1L);
         JsonContent<ItemDto> result = json.write(itemDto);
         assertThat(result).extractingJsonPathNumberValue("$.id").isEqualTo(1);
         assertThat(result).extractingJsonPathStringValue("$.name").isEqualTo("item_dto");
