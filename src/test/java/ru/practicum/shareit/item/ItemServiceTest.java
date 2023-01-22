@@ -6,10 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.StatusBooking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
@@ -56,6 +53,8 @@ class ItemServiceTest {
     private Item item;
     private User user;
     private Booking booking;
+    private List<Booking> lastBooking;
+    private List<Booking> nextBooking;
     private ItemRequest itemRequest;
     private Comment comment;
     private CommentDto commentDto;
@@ -70,6 +69,10 @@ class ItemServiceTest {
         itemDto = new ItemDto(1L, "item", "item test", true, 1L);
         booking = new Booking(2L, LocalDateTime.now(), LocalDateTime.now().minusDays(1), item, user, StatusBooking.APPROVED);
         itemRequest = new ItemRequest(1L, "description", user, LocalDateTime.now());
+        lastBooking = new ArrayList<>();
+        lastBooking.add(new Booking(5L, LocalDateTime.now().minusDays(6), LocalDateTime.now().minusDays(1), item, user, StatusBooking.APPROVED));
+        nextBooking = new ArrayList<>();
+        nextBooking.add(new Booking(7L, LocalDateTime.now(), LocalDateTime.now().minusDays(1), item, user, StatusBooking.APPROVED));
     }
 
     @Test
@@ -106,7 +109,27 @@ class ItemServiceTest {
 
     @Test
     void getItemsByUserIdTest() {
-        Pageable pageable = PageRequest.of(1, 1);
+        Pageable pageable = PageRequest.of(1, 1, Sort.by(Sort.Direction.ASC, "id"));
+        Item item = new Item(1L, "item", "item test", true, user, null);
+        List<Item> items = new ArrayList<>(Collections.singletonList(item));
+        Page<Item> pagedResponse = new PageImpl(items);
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(itemRepository.findAllByOwnerId(1L, pageable)).thenReturn(pagedResponse);
+        when(bookingRepository.findAllByItemInAndStartLessThanOrderByEndDesc(any(List.class), any(LocalDateTime.class))).thenReturn(lastBooking);
+        when(bookingRepository.findAllByItemInAndStartAfterOrderByStart(any(List.class), any(LocalDateTime.class))).thenReturn(nextBooking);
+        final List<ItemResponseDto> itemDtoList = itemService.getItemsByUserId(1L, 1, 1);
+        assertNotNull(itemDtoList);
+        assertEquals(1, itemDtoList.size());
+        ItemResponseDto itemDto = itemDtoList.get(0);
+        assertEquals(item.getId(), itemDto.getId());
+        assertEquals(item.getName(), itemDto.getName());
+        assertEquals(item.getDescription(), itemDto.getDescription());
+        assertThrows(ObjectNotFoundException.class, () -> itemService.getItemsByUserId(2L, 1, 1));
+    }
+
+    @Test
+    void getItemsByUserIdTestWithoutBooking() {
+        Pageable pageable = PageRequest.of(1, 1, Sort.by(Sort.Direction.ASC, "id"));
         Item item = new Item(1L, "item", "item test", true, user, null);
         List<Item> items = new ArrayList<>(Collections.singletonList(item));
         Page<Item> pagedResponse = new PageImpl(items);

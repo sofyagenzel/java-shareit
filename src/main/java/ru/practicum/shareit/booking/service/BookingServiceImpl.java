@@ -49,7 +49,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponseDto createBooking(BookingDto bookingDto, Long userId) {
         Booking newBooking = new Booking();
         BookingMapper.toBooking(newBooking, bookingDto);
-        if (bookingDto.getEnd() == null || bookingDto.getEnd().isBefore(bookingDto.getStart())) {
+        if (!bookingDto.getEnd().isAfter(bookingDto.getStart())) {
             throw new BadRequestException("Не корректная дата окончания бронирования");
         }
         newBooking.setBooker(userRepository.findById(userId)

@@ -1,9 +1,6 @@
 package ru.practicum.shareit.booking.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
@@ -24,9 +21,11 @@ public class Booking {
     private Long id;
     @Column(name = "start_date")
     @FutureOrPresent
+    @NonNull
     private LocalDateTime start;
     @Column(name = "end_date")
     @Future
+    @NonNull
     private LocalDateTime end;
     @ManyToOne
     private Item item;

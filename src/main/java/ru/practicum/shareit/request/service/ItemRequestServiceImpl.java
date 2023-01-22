@@ -19,8 +19,12 @@ import ru.practicum.shareit.user.repository.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -50,22 +54,28 @@ public class ItemRequestServiceImpl implements ItemRequestService {
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Пользователь не найден" + userId)));
         ItemRequestResponseDto itemRequestResponseDto = RequestMapper.toItemRequestResponseDto(itemRequest);
         itemRequestResponseDto.setItems(itemRepository.findAllByRequestId(itemRequest.getId()).stream()
-                .map(ItemMapper::toItemDto).collect(Collectors.toList()));
+                .map(ItemMapper::toItemDto).collect(toList()));
         return itemRequestResponseDto;
     }
 
     @Override
     public List<ItemRequestResponseDto> getUserRequests(Long userId, Integer from, Integer size) {
-        List<ItemRequestResponseDto> itemRequestList = new ArrayList<>();
         userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Пользователь не найден" + userId)));
         Pageable pageable;
         pageable = PageRequest.of(from, size);
-        List<ItemRequest> itemRequestDb = itemRequestRepository.findAllByRequesterId(userId, pageable).getContent();
-        for (ItemRequest itemRequest : itemRequestDb) {
+        List<ItemRequest> itemRequests = itemRequestRepository.findAllByRequesterId(userId, pageable).stream()
+                .collect(toList());
+        Map<Long, List<ItemDto>> itemsByRequest = itemRepository.findAllByRequestIn(itemRequests)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .collect(groupingBy(ItemDto::getRequestId, toList()));
+        List<ItemRequestResponseDto> itemRequestList = new ArrayList<>();
+        for (ItemRequest itemRequest : itemRequests) {
             ItemRequestResponseDto itemRequestResponseDto = RequestMapper.toItemRequestResponseDto(itemRequest);
-            itemRequestResponseDto.setItems(itemRepository.findAllByRequestId(itemRequest.getId()).stream()
-                    .map(ItemMapper::toItemDto).collect(Collectors.toList()));
+            for (Long request : itemsByRequest.keySet()) {
+                itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(request, Collections.emptyList()));
+            }
             itemRequestList.add(itemRequestResponseDto);
         }
         return itemRequestList;
@@ -73,25 +83,23 @@ public class ItemRequestServiceImpl implements ItemRequestService {
 
     @Override
     public List<ItemRequestResponseDto> getAllRequests(Long userId, Integer from, Integer size) {
-        Long itemRequestId;
         userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Пользователь не найден" + userId)));
         pageable = PageRequest.of(from, size, Sort.by("created").descending());
-        List<ItemRequest> itemRequestDb = itemRequestRepository.findAllByRequesterIdIsNot(userId, pageable).stream()
+        List<ItemRequest> itemRequests = itemRequestRepository.findAllByRequesterIdIsNot(userId, pageable).stream()
                 .filter(itemRequest -> !itemRequest.getRequester().getId().equals(userId))
-                .collect(Collectors.toList());
-        List<ItemDto> itemList = itemRepository.findAll().stream()
-                .filter(item -> item.getRequest() != null).map(ItemMapper::toItemDto).collect(Collectors.toList());
+                .collect(toList());
+        Map<Long, List<ItemDto>> itemsByRequest = itemRepository.findAllByRequestIn(itemRequests)
+                .stream()
+                .map(ItemMapper::toItemDto)
+                .collect(groupingBy(ItemDto::getRequestId, toList()));
         List<ItemRequestResponseDto> itemRequestList = new ArrayList<>();
-        for (ItemRequest itemRequest : itemRequestDb) {
-            itemRequestId = itemRequest.getId();
+        for (ItemRequest itemRequest : itemRequests) {
             ItemRequestResponseDto itemRequestResponseDto = RequestMapper.toItemRequestResponseDto(itemRequest);
-            for (ItemDto itemL : itemList) {
-                if (itemL.getRequestId().equals(itemRequestId)) {
-                    itemRequestResponseDto.setItems(itemList);
-                    itemRequestList.add(itemRequestResponseDto);
-                }
+            for (Long request : itemsByRequest.keySet()) {
+                itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(request, Collections.emptyList()));
             }
+            itemRequestList.add(itemRequestResponseDto);
         }
         return itemRequestList;
     }

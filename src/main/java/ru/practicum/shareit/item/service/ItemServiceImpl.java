@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
@@ -27,6 +28,8 @@ import ru.practicum.shareit.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,7 +41,6 @@ public class ItemServiceImpl implements ItemService {
     private final BookingRepository bookingRepository;
     private final CommentRepository commentRepository;
     private final RequestRepository requestRepository;
-    Pageable pageable;
 
     @Transactional
     @Override
@@ -77,19 +79,31 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemResponseDto> getItemsByUserId(Long userId, Integer from, Integer size) {
-        pageable = PageRequest.of(from, size);
+        Pageable pageable;
+        pageable = PageRequest.of(from, size, Sort.by(Sort.Direction.ASC, "id"));
         userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Пользователь не найден" + userId)));
-        List<Item> itemsDb = itemRepository.findAllByOwnerId(userId, pageable)
-                .stream().filter(item -> item.getRequest() == null).collect(Collectors.toList());
-        List<ItemResponseDto> itemResponseDtoList = new ArrayList<>();
-        for (Item item : itemsDb) {
-            ItemResponseDto itemResponseDto = ItemMapper.toItemResponseDto(item);
-            itemResponseDto = addBookingsCommentsItem(item, userId);
-            itemResponseDtoList.add(itemResponseDto);
-        }
-        return itemResponseDtoList;
+        List<Item> items = itemRepository.findAllByOwnerId(userId, pageable).getContent();
+        List<Comment> comments = commentRepository.findAllByItemIn(items);
+        Map<Long, List<CommentResponseDto>> commentsByItemIds = comments.stream()
+                .map(CommentMapper::toCommentResponseDto)
+                .collect(Collectors.groupingBy(comment -> comment.getItemId(), Collectors.toList()));
+        LocalDateTime now = LocalDateTime.now();
+        List<Booking> lastBookings = bookingRepository.findAllByItemInAndStartLessThanOrderByEndDesc(items, now);
+        Map<Long, Booking> lastBookingsByItemIds = lastBookings.stream()
+                .collect(Collectors.toMap(booking -> booking.getItem().getId(), Function.identity(),
+                        (booking1, booking2) -> booking1));
+        List<Booking> nextBookings = bookingRepository.findAllByItemInAndStartAfterOrderByStart(
+                items, now);
+        Map<Long, Booking> nextBookingsByItemIds = nextBookings.stream()
+                .collect(Collectors.toMap(booking -> booking.getItem().getId(), Function.identity(),
+                        (booking1, booking2) -> booking1));
+        return items.stream()
+                .map(item -> ItemMapper.toMap(item, commentsByItemIds.get(item.getId()),
+                        lastBookingsByItemIds.get(item.getId()), nextBookingsByItemIds.get(item.getId())))
+                .collect(Collectors.toList());
     }
+
 
     @Transactional
     @Override
@@ -100,6 +114,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     public List<ItemResponseDto> searchItems(String text, Integer from, Integer size) {
+        Pageable pageable;
         pageable = PageRequest.of(from / size, size);
         if (StringUtils.isBlank(text)) {
             return new ArrayList<>();

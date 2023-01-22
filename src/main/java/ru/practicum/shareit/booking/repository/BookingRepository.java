@@ -9,10 +9,17 @@ import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Booking findFirstByItemAndBookerAndEndIsBefore(Item item, User user, LocalDateTime now);
+
+    List<Booking> findAllByItemInAndStartLessThanOrderByEndDesc(
+            List<Item> items, LocalDateTime now);
+
+    List<Booking> findAllByItemInAndStartAfterOrderByStart(
+            List<Item> items, LocalDateTime now);
 
     Booking findFirstByItemAndEndLessThanOrderByEndDesc(Item item, LocalDateTime now);
 

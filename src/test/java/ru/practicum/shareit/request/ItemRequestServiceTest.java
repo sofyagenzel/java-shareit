@@ -105,7 +105,6 @@ class ItemRequestServiceTest {
         List<ItemRequest> itemRequests = new ArrayList<>(Collections.singletonList(itemRequest));
         Page<ItemRequest> pagedResponse = new PageImpl(itemRequests);
         when(itemRequestRepository.findAllByRequesterIdIsNot(anyLong(), any(Pageable.class))).thenReturn(pagedResponse);
-        when(itemRepository.findAll()).thenReturn(Collections.singletonList(item));
         List<ItemRequestResponseDto> itemRequestList = itemRequestService.getAllRequests(2L, 1, 1);
         assertEquals(1, itemRequestList.size());
         ItemRequestResponseDto itemRequestDb = itemRequestList.get(0);

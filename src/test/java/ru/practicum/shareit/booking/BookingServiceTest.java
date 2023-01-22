@@ -13,13 +13,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingResponseDto;
-import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.State;
 import ru.practicum.shareit.booking.model.StatusBooking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.booking.service.BookingServiceImpl;
-import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.IllegalStateException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -75,7 +73,6 @@ public class BookingServiceTest {
         bookingDto = new BookingDto(1L, start, end, 1L);
         booking = new Booking(1L, start, end, item, user, StatusBooking.APPROVED);
         booking1 = new Booking(2L, start, end, item, user, StatusBooking.WAITING);
-        booking2 = new Booking(1L, start, null, item, user, StatusBooking.APPROVED);
     }
 
     @Test
@@ -87,7 +84,6 @@ public class BookingServiceTest {
         assertEquals(bookingDb.getId(), bookingDto.getId());
         assertEquals(bookingDb.getStart(), bookingDto.getStart());
         assertEquals(bookingDb.getEnd(), bookingDto.getEnd());
-        assertThrows(BadRequestException.class, () -> bookingService.createBooking(BookingMapper.toBookingDto(booking2), 1L));
         when(itemRepository.findById(anyLong())).thenReturn(Optional.empty());
         assertThrows(ObjectNotFoundException.class, () -> bookingService.createBooking(bookingDto, 1L));
     }
