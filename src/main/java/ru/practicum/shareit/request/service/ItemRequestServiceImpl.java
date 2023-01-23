@@ -33,7 +33,6 @@ public class ItemRequestServiceImpl implements ItemRequestService {
     private final RequestRepository itemRequestRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
-    Pageable pageable;
 
     @Transactional
     @Override
@@ -66,27 +65,22 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         pageable = PageRequest.of(from, size);
         List<ItemRequest> itemRequests = itemRequestRepository.findAllByRequesterId(userId, pageable).stream()
                 .collect(toList());
-        Map<Long, List<ItemDto>> itemsByRequest = itemRepository.findAllByRequestIn(itemRequests)
-                .stream()
-                .map(ItemMapper::toItemDto)
-                .collect(groupingBy(ItemDto::getRequestId, toList()));
-        List<ItemRequestResponseDto> itemRequestList = new ArrayList<>();
-        for (ItemRequest itemRequest : itemRequests) {
-            ItemRequestResponseDto itemRequestResponseDto = RequestMapper.toItemRequestResponseDto(itemRequest);
-            itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(itemRequest.getId(), Collections.emptyList()));
-            itemRequestList.add(itemRequestResponseDto);
-        }
-        return itemRequestList;
+        return getItemRequestResponseDtos(itemRequests);
     }
 
     @Override
     public List<ItemRequestResponseDto> getAllRequests(Long userId, Integer from, Integer size) {
+        Pageable pageable;
         userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Пользователь не найден" + userId)));
         pageable = PageRequest.of(from, size, Sort.by("created").descending());
         List<ItemRequest> itemRequests = itemRequestRepository.findAllByRequesterIdIsNot(userId, pageable).stream()
                 .filter(itemRequest -> !itemRequest.getRequester().getId().equals(userId))
                 .collect(toList());
+        return getItemRequestResponseDtos(itemRequests);
+    }
+
+    private List<ItemRequestResponseDto> getItemRequestResponseDtos(List<ItemRequest> itemRequests) {
         Map<Long, List<ItemDto>> itemsByRequest = itemRepository.findAllByRequestIn(itemRequests)
                 .stream()
                 .map(ItemMapper::toItemDto)
