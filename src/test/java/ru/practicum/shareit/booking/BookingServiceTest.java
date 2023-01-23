@@ -103,7 +103,8 @@ public class BookingServiceTest {
         when(bookingRepository.findById(anyLong())).thenReturn(Optional.of(booking));
         bookingResponseDto = bookingService.getBooking(1L, 1L);
         assertEquals(booking.getId(), bookingResponseDto.getId());
-        assertEquals(booking.getItem(), bookingResponseDto.getItem());
+        assertEquals(booking.getItem().getId(), bookingResponseDto.getItem().getId());
+        assertEquals(booking.getItem().getName(), bookingResponseDto.getItem().getName());
         assertEquals(booking.getStart(), bookingResponseDto.getStart());
         assertThrows(ObjectNotFoundException.class, () -> bookingService.getBooking(2L, 7L));
     }
@@ -147,7 +148,8 @@ public class BookingServiceTest {
         BookingResponseDto bookingDb = bookingService.stateToRepositoryAndOwner(user, State.ALL, pageable).get(0);
         BookingResponseDto bookingDb1 = bookingService.stateToRepositoryAndOwner(user, State.REJECTED, pageable).get(0);
         assertEquals(booking.getId(), bookingDb.getId());
-        assertEquals(booking.getItem(), bookingDb.getItem());
+        assertEquals(booking.getItem().getId(), bookingDb.getItem().getId());
+        assertEquals(booking.getItem().getName(), bookingDb.getItem().getName());
         assertNotNull(bookingDb1);
         when(bookingRepository.findAllByItemOwnerIdAndEndIsBeforeAndStatusIsOrderByStartDesc(anyLong(), any(LocalDateTime.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
         BookingResponseDto bookingDb2 = bookingService.stateToRepositoryAndOwner(user, State.PAST, pageable).get(0);
@@ -175,7 +177,8 @@ public class BookingServiceTest {
         BookingResponseDto bookingDb = bookingService.stateToRepository(user, State.ALL, pageable).get(0);
         BookingResponseDto bookingDb1 = bookingService.stateToRepository(user, State.REJECTED, pageable).get(0);
         assertEquals(booking.getId(), bookingDb.getId());
-        assertEquals(booking.getItem(), bookingDb.getItem());
+        assertEquals(booking.getItem().getId(), bookingDb.getItem().getId());
+        assertEquals(booking.getItem().getName(), bookingDb.getItem().getName());
         assertNotNull(bookingDb1);
         when(bookingRepository.findAllByBookerAndEndIsBeforeAndStatusIsOrderByStartDesc(any(User.class), any(LocalDateTime.class), any(StatusBooking.class), any(Pageable.class))).thenReturn(pagedResponse);
         BookingResponseDto bookingDb2 = bookingService.stateToRepository(user, State.PAST, pageable).get(0);

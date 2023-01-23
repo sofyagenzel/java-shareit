@@ -73,9 +73,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         List<ItemRequestResponseDto> itemRequestList = new ArrayList<>();
         for (ItemRequest itemRequest : itemRequests) {
             ItemRequestResponseDto itemRequestResponseDto = RequestMapper.toItemRequestResponseDto(itemRequest);
-            for (Long request : itemsByRequest.keySet()) {
-                itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(request, Collections.emptyList()));
-            }
+            itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(itemRequest.getId(), Collections.emptyList()));
             itemRequestList.add(itemRequestResponseDto);
         }
         return itemRequestList;
@@ -96,9 +94,7 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         List<ItemRequestResponseDto> itemRequestList = new ArrayList<>();
         for (ItemRequest itemRequest : itemRequests) {
             ItemRequestResponseDto itemRequestResponseDto = RequestMapper.toItemRequestResponseDto(itemRequest);
-            for (Long request : itemsByRequest.keySet()) {
-                itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(request, Collections.emptyList()));
-            }
+            itemRequestResponseDto.setItems(itemsByRequest.getOrDefault(itemRequest.getId(), Collections.emptyList()));
             itemRequestList.add(itemRequestResponseDto);
         }
         return itemRequestList;

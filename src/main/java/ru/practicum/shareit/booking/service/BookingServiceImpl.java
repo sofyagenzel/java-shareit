@@ -33,7 +33,6 @@ public class BookingServiceImpl implements BookingService {
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
-    Pageable pageable;
 
     public static Optional<State> checkState(String stateRequest) {
         for (State state : State.values()) {
@@ -102,6 +101,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getAllBookingsByState(Long userId, String stringState, Integer from, Integer size) {
+        Pageable pageable;
         pageable = PageRequest.of(from / size, size, Sort.by("start").descending());
         User booker = userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("Пользователь не найден: " + userId));
@@ -113,13 +113,14 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<BookingResponseDto> getAllBookingsByStateAndOwner(Long userId, String stringState, Integer from, Integer size) {
+        Pageable pageable;
         pageable = PageRequest.of(from / size, size, Sort.by("start").descending());
         User booker = userRepository.findById(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("Пользователь не найден: " + userId));
         State state = checkState(stringState).orElseThrow(() -> new IllegalStateException("Unknown state: " + stringState));
         return stateToRepositoryAndOwner(booker, state, pageable)
                 .stream()
-                .filter(b -> Objects.equals(b.getItem().getOwner().getId(), userId))
+                .filter(b -> Objects.equals(b.getItem().getOwnerId(), userId))
                 .collect(Collectors.toList());
     }
 

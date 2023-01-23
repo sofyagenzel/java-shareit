@@ -115,8 +115,8 @@ class ItemServiceTest {
         Page<Item> pagedResponse = new PageImpl(items);
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(itemRepository.findAllByOwnerId(1L, pageable)).thenReturn(pagedResponse);
-        when(bookingRepository.findAllByItemInAndStartLessThanOrderByEndDesc(any(List.class), any(LocalDateTime.class))).thenReturn(lastBooking);
-        when(bookingRepository.findAllByItemInAndStartAfterOrderByStart(any(List.class), any(LocalDateTime.class))).thenReturn(nextBooking);
+        when(bookingRepository.findAllByItemInAndStartLessThanEqualAndStatusIsOrderByEndDesc(any(List.class), any(LocalDateTime.class), any(StatusBooking.class))).thenReturn(lastBooking);
+        when(bookingRepository.findAllByItemInAndStartIsAfterAndStatusOrderByStart(any(List.class), any(LocalDateTime.class), any(StatusBooking.class))).thenReturn(nextBooking);
         final List<ItemResponseDto> itemDtoList = itemService.getItemsByUserId(1L, 1, 1);
         assertNotNull(itemDtoList);
         assertEquals(1, itemDtoList.size());
@@ -175,7 +175,7 @@ class ItemServiceTest {
     void createCommentTest() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
-        when(bookingRepository.findFirstByItemAndBookerAndEndIsBefore(any(Item.class), any(User.class), any(LocalDateTime.class))).thenReturn(booking);
+        when(bookingRepository.findFirstByItemAndBookerAndEndIsBeforeAndStatusIs(any(Item.class), any(User.class), any(LocalDateTime.class), any(StatusBooking.class))).thenReturn(booking);
         when(commentRepository.save(any(Comment.class))).thenReturn(comment);
         CommentResponseDto comment1 = itemService.createComment(commentDto, 1L, 1L);
         assertEquals(commentDto.getId(), comment1.getId());
@@ -188,7 +188,7 @@ class ItemServiceTest {
     void createCommentWithoutBookingTest() {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(itemRepository.findById(item.getId())).thenReturn(Optional.of(item));
-        when(bookingRepository.findFirstByItemAndBookerAndEndIsBefore(any(Item.class), any(User.class), any(LocalDateTime.class))).thenReturn(null);
+        when(bookingRepository.findFirstByItemAndBookerAndEndIsBeforeAndStatusIs(any(Item.class), any(User.class), any(LocalDateTime.class), any(StatusBooking.class))).thenReturn(null);
         assertThrows(BadRequestException.class, () -> itemService.createComment(commentDto, 1L, 1L));
     }
 }

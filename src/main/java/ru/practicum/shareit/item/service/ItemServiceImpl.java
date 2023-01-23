@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.StatusBooking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exception.BadRequestException;
 import ru.practicum.shareit.exception.ObjectNotFoundException;
@@ -89,12 +90,12 @@ public class ItemServiceImpl implements ItemService {
                 .map(CommentMapper::toCommentResponseDto)
                 .collect(Collectors.groupingBy(comment -> comment.getItemId(), Collectors.toList()));
         LocalDateTime now = LocalDateTime.now();
-        List<Booking> lastBookings = bookingRepository.findAllByItemInAndStartLessThanOrderByEndDesc(items, now);
+        List<Booking> lastBookings = bookingRepository.findAllByItemInAndStartLessThanEqualAndStatusIsOrderByEndDesc(items, now, StatusBooking.APPROVED);
         Map<Long, Booking> lastBookingsByItemIds = lastBookings.stream()
                 .collect(Collectors.toMap(booking -> booking.getItem().getId(), Function.identity(),
                         (booking1, booking2) -> booking1));
-        List<Booking> nextBookings = bookingRepository.findAllByItemInAndStartAfterOrderByStart(
-                items, now);
+        List<Booking> nextBookings = bookingRepository.findAllByItemInAndStartIsAfterAndStatusOrderByStart(
+                items, now, StatusBooking.APPROVED);
         Map<Long, Booking> nextBookingsByItemIds = nextBookings.stream()
                 .collect(Collectors.toMap(booking -> booking.getItem().getId(), Function.identity(),
                         (booking1, booking2) -> booking1));
@@ -134,7 +135,7 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Пользователь не найден" + userId))));
         newComment.setItem(itemRepository.findById(itemId)
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Вещь не найдена:" + itemId))));
-        Booking booking = bookingRepository.findFirstByItemAndBookerAndEndIsBefore(newComment.getItem(), newComment.getAuthor(), LocalDateTime.now());
+        Booking booking = bookingRepository.findFirstByItemAndBookerAndEndIsBeforeAndStatusIs(newComment.getItem(), newComment.getAuthor(), LocalDateTime.now(), StatusBooking.APPROVED);
         if (booking == null) {
             throw new BadRequestException("Вещь не была забронирована");
         }
@@ -144,13 +145,13 @@ public class ItemServiceImpl implements ItemService {
 
     private ItemResponseDto addBookingsCommentsItem(Item itemDto, Long userId) {
         ItemResponseDto itemResponseDto = ItemMapper.toItemResponseDto(itemDto);
-        var lastBookings = bookingRepository.findFirstByItemAndEndLessThanOrderByEndDesc(itemDto, LocalDateTime.now());
+        var lastBookings = bookingRepository.findFirstByItemAndEndLessThanEqualAndStatusIsOrderByEndDesc(itemDto, LocalDateTime.now(), StatusBooking.APPROVED);
         if (lastBookings != null && userId.equals(itemDto.getOwner().getId())) {
-            itemResponseDto.setLastBooking(BookingMapper.toBookingResponseDto(lastBookings));
+            itemResponseDto.setLastBooking(BookingMapper.toBookingDto(lastBookings));
         }
-        var nextBookings = bookingRepository.findFirstByItemAndStartIsAfterOrderByStart(itemDto, LocalDateTime.now());
+        var nextBookings = bookingRepository.findFirstByItemAndStartIsAfterAndStatusIsOrderByStart(itemDto, LocalDateTime.now(), StatusBooking.APPROVED);
         if (nextBookings != null && userId.equals(itemDto.getOwner().getId())) {
-            itemResponseDto.setNextBooking(BookingMapper.toBookingResponseDto(nextBookings));
+            itemResponseDto.setNextBooking(BookingMapper.toBookingDto(nextBookings));
         }
         List<CommentResponseDto> comments = commentRepository.findAllByItem(itemDto).stream()
                 .map(CommentMapper::toCommentResponseDto)

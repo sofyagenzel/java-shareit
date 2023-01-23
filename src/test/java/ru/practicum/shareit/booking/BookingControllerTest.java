@@ -9,12 +9,8 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.shareit.booking.controller.BookingController;
-import ru.practicum.shareit.booking.model.Booking;
-import ru.practicum.shareit.booking.model.StatusBooking;
+import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
-import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.request.model.ItemRequest;
-import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
 
@@ -38,10 +34,7 @@ class BookingControllerTest {
     void createBookingTest() throws Exception {
         LocalDateTime start = LocalDateTime.now().plusDays(1);
         LocalDateTime end = LocalDateTime.now().plusDays(2);
-        User user = new User(1L, "User1", "iuser1@mail.ru");
-        User user1 = new User(2L, "User1", "iuser1@mail.ru");
-        Item item = new Item(1L, "Item", "Item description", true, user1, new ItemRequest());
-        Booking booking = new Booking(1L, start, end, item, user, StatusBooking.APPROVED);
+        BookingDto booking = new BookingDto(1L, start, end, 1L);
         String body = mapper.writeValueAsString(booking);
         mockMvc.perform(post("/bookings")
                         .contentType(MediaType.APPLICATION_JSON)

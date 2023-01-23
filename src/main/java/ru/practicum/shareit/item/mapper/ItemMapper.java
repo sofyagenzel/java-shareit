@@ -2,7 +2,6 @@ package ru.practicum.shareit.item.mapper;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import ru.practicum.shareit.booking.mapper.BookingMapper;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.dto.CommentResponseDto;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -43,27 +42,22 @@ public class ItemMapper {
     }
 
     public static ItemResponseDto toMap(Item item, List<CommentResponseDto> comments, Booking lastBooking, Booking nextBooking) {
-        if (lastBooking != null && nextBooking != null) {
-            return new ItemResponseDto(
-                    item.getId(),
-                    item.getName(),
-                    item.getDescription(),
-                    item.getAvailable(),
-                    BookingMapper.toBookingResponseDto(lastBooking),
-                    BookingMapper.toBookingResponseDto(nextBooking),
-                    comments,
-                    item.getRequest() != null ? item.getRequest().getId() : null);
-        } else {
-            return new ItemResponseDto(
-                    item.getId(),
-                    item.getName(),
-                    item.getDescription(),
-                    item.getAvailable(),
-                    null,
-                    null,
-                    comments,
-                    item.getRequest() != null ? item.getRequest().getId() : null);
-
+        ItemResponseDto.BookingDto nextBookingDto = null;
+        ItemResponseDto.BookingDto lastBookingDto = null;
+        if (lastBooking != null) {
+            lastBookingDto = new ItemResponseDto.BookingDto(lastBooking.getId(), lastBooking.getStart(), lastBooking.getEnd(), lastBooking.getBooker().getId());
         }
+        if (nextBooking != null) {
+            nextBookingDto = new ItemResponseDto.BookingDto(nextBooking.getId(), nextBooking.getStart(), nextBooking.getEnd(), nextBooking.getBooker().getId());
+        }
+        return new ItemResponseDto(
+                item.getId(),
+                item.getName(),
+                item.getDescription(),
+                item.getAvailable(),
+                lastBookingDto,
+                nextBookingDto,
+                comments,
+                item.getRequest() != null ? item.getRequest().getId() : null);
     }
 }

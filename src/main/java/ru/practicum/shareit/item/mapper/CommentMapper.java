@@ -6,8 +6,6 @@ import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.CommentResponseDto;
 import ru.practicum.shareit.item.model.Comment;
 
-import java.util.Optional;
-
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class CommentMapper {
     public static CommentResponseDto toCommentResponseDto(Comment comment) {
@@ -21,6 +19,6 @@ public class CommentMapper {
 
     public static void toComment(Comment comment, CommentDto commentDto) {
         comment.setId(commentDto.getId());
-        Optional.ofNullable(commentDto.getText()).ifPresent(comment::setText);
+        comment.setText(commentDto.getText());
     }
 }
