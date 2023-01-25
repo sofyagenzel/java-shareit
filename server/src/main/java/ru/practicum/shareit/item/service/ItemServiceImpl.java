@@ -60,7 +60,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Transactional
     @Override
-    public ItemResponseDto updateItem( Long itemId,ItemDto itemDto, Long userId) {
+    public ItemResponseDto updateItem(Long itemId, ItemDto itemDto, Long userId) {
         System.out.println("туть");
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ObjectNotFoundException("Вещь не найдена"));

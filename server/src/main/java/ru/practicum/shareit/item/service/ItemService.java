@@ -12,7 +12,7 @@ import java.util.List;
 public interface ItemService {
     ItemResponseDto createItem(ItemDto itemDto, Long userId);
 
-    ItemResponseDto updateItem(Long itemId,ItemDto itemDto,Long userId);
+    ItemResponseDto updateItem(Long itemId, ItemDto itemDto, Long userId);
 
     List<ItemResponseDto> findAll(Long userId, Integer from, Integer size);
 

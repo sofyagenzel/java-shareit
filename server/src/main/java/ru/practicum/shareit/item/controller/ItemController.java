@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
@@ -32,7 +31,7 @@ public class ItemController {
     }
 
     @PatchMapping("/{itemId}")
-    public ItemResponseDto updateItem(@PathVariable Long itemId,@RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ItemResponseDto updateItem(@PathVariable Long itemId, @RequestBody ItemDto itemDto, @RequestHeader("X-Sharer-User-Id") Long userId) {
         return itemService.updateItem(itemId, itemDto, userId);
     }
 
