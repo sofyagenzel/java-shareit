@@ -1,19 +1,19 @@
 package ru.practicum.shareit.booking.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
 import javax.persistence.*;
+import javax.validation.constraints.Future;
 import javax.validation.constraints.FutureOrPresent;
 import java.time.LocalDateTime;
 
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Getter
+@Setter
 @Table(name = "bookings")
 public class Booking {
     @Id
@@ -21,23 +21,16 @@ public class Booking {
     private Long id;
     @Column(name = "start_date")
     @FutureOrPresent
+    @NonNull
     private LocalDateTime start;
     @Column(name = "end_date")
-    @FutureOrPresent
+    @Future
+    @NonNull
     private LocalDateTime end;
-    @OneToOne
+    @ManyToOne
     private Item item;
-    @OneToOne
+    @ManyToOne
     private User booker;
     @Enumerated(EnumType.STRING)
     private StatusBooking status;
-
-    public Booking(Booking oldBooking) {
-        this.setId(oldBooking.getId());
-        this.setBooker(oldBooking.getBooker());
-        this.setStart(oldBooking.getStart());
-        this.setEnd(oldBooking.getEnd());
-        this.setStatus(oldBooking.getStatus());
-        this.setItem(oldBooking.getItem());
-    }
 }
