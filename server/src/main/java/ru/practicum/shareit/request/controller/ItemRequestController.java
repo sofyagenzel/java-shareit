@@ -16,13 +16,13 @@ import java.util.List;
 public class ItemRequestController {
     private final ItemRequestService itemRequestService;
 
-    @PostMapping()
+    @PostMapping
     public ItemRequestResponseDto createRequest(@RequestBody ItemRequestDto itemRequestDto,
                                                 @RequestHeader("X-Sharer-User-Id") Long userId) {
         return itemRequestService.createRequest(itemRequestDto, userId);
     }
 
-    @GetMapping()
+    @GetMapping
     public List<ItemRequestResponseDto> getUserRequests(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                         @RequestParam(name = "from", defaultValue = "0") Integer from,
                                                         @RequestParam(name = "size", defaultValue = "100") Integer size) {
